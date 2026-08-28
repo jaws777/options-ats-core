@@ -24,7 +24,7 @@ jobs:
           persist-credentials: false
 
       - name: Install CMake
-        uses: lukka/get-cmake@a70f1cfa1857a3eecfe0d34962269e1b1e8be56c # v3.30.2
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
 
       - name: Configure
         run: >
@@ -50,7 +50,7 @@ jobs:
           persist-credentials: false
 
       - name: Install CMake
-        uses: lukka/get-cmake@a70f1cfa1857a3eecfe0d34962269e1b1e8be56c # v3.30.2
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
 
       - name: Install Clang
         run: sudo apt-get update && sudo apt-get install -y clang
@@ -79,7 +79,7 @@ jobs:
           persist-credentials: false
 
       - name: Install CMake
-        uses: lukka/get-cmake@a70f1cfa1857a3eecfe0d34962269e1b1e8be56c # v3.30.2
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
 
       - name: Install Clang
         run: sudo apt-get update && sudo apt-get install -y clang
@@ -110,7 +110,7 @@ jobs:
           persist-credentials: false
 
       - name: Install CMake
-        uses: lukka/get-cmake@a70f1cfa1857a3eecfe0d34962269e1b1e8be56c # v3.30.2
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
 
       - name: Install clang-tidy
         run: sudo apt-get update && sudo apt-get install -y clang clang-tidy
@@ -232,7 +232,7 @@ jobs:
           persist-credentials: false
 
       - name: Install CMake
-        uses: lukka/get-cmake@a70f1cfa1857a3eecfe0d34962269e1b1e8be56c # v3.30.2
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
 
       - name: Install Clang
         run: sudo apt-get update && sudo apt-get install -y clang
@@ -264,7 +264,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - uses: lukka/get-cmake@a70f1cfa1857a3eecfe0d34962269e1b1e8be56c # v3.30.2
+      - uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
       - name: Configure install-only package
         run: >
           cmake -B build-package

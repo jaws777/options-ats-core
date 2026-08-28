@@ -25,7 +25,7 @@ jobs:
           persist-credentials: false
 
       - name: Install CMake
-        uses: lukka/get-cmake@a70f1cfa1857a3eecfe0d34962269e1b1e8be56c # v3.30.2
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@6f5948dfacef28e207b48d0905cf90c03365536d # v3
