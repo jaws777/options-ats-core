@@ -1,0 +1,282 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop, master]
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: ${{ matrix.os }} / ${{ matrix.build_type }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        build_type: [Debug, Release]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Install CMake
+        uses: lukka/get-cmake@a70f1cfa1857a3eecfe0d34962269e1b1e8be56c # v3.30.2
+
+      - name: Configure
+        run: >
+          cmake -B build
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DOPTIONS_ATS_CORE_BUILD_CATCH2=ON
+          -DOPTIONS_ATS_CORE_BUILD_GTESTS=ON
+          -DOPTIONS_ATS_CORE_BUILD_BENCHMARKS=OFF
+          -DOPTIONS_ATS_CORE_BUILD_EXAMPLES=OFF
+
+      - name: Build
+        run: cmake --build build -j
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  asan:
+    name: ubuntu-latest / ASan + UBSan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Install CMake
+        uses: lukka/get-cmake@a70f1cfa1857a3eecfe0d34962269e1b1e8be56c # v3.30.2
+
+      - name: Install Clang
+        run: sudo apt-get update && sudo apt-get install -y clang
+
+      - name: Configure (ASan)
+        run: >
+          cmake -B build-asan
+          -DCMAKE_BUILD_TYPE=Asan
+          -DCMAKE_CXX_COMPILER=clang++
+          -DOPTIONS_ATS_CORE_BUILD_BENCHMARKS=OFF
+          -DOPTIONS_ATS_CORE_BUILD_EXAMPLES=OFF
+
+      - name: Build
+        run: cmake --build build-asan -j
+
+      - name: Test under ASan + UBSan
+        run: ctest --test-dir build-asan --output-on-failure
+
+  tsan:
+    name: ubuntu-latest / TSan
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Install CMake
+        uses: lukka/get-cmake@a70f1cfa1857a3eecfe0d34962269e1b1e8be56c # v3.30.2
+
+      - name: Install Clang
+        run: sudo apt-get update && sudo apt-get install -y clang
+
+      - name: Configure (TSan)
+        run: >
+          cmake -B build-tsan
+          -DCMAKE_BUILD_TYPE=Tsan
+          -DCMAKE_CXX_COMPILER=clang++
+          -DOPTIONS_ATS_CORE_BUILD_BENCHMARKS=OFF
+          -DOPTIONS_ATS_CORE_BUILD_EXAMPLES=OFF
+
+      - name: Build
+        run: cmake --build build-tsan -j
+
+      - name: Catch2 concurrency tests under TSan
+        run: ./build-tsan/unit_tests "[spsc],[seqlock],[risk]"
+
+      - name: GTest concurrency tests under TSan
+        run: ./build-tsan/gtest_suite --gtest_filter="*Concurrent*:*Seqlock*"
+
+  lint:
+    name: clang-tidy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Install CMake
+        uses: lukka/get-cmake@a70f1cfa1857a3eecfe0d34962269e1b1e8be56c # v3.30.2
+
+      - name: Install clang-tidy
+        run: sudo apt-get update && sudo apt-get install -y clang clang-tidy
+
+      - name: Configure (for compile_commands.json)
+        run: >
+          cmake -B build-lint
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_CXX_COMPILER=clang++
+          -DOPTIONS_ATS_CORE_BUILD_GTESTS=OFF
+          -DOPTIONS_ATS_CORE_BUILD_BENCHMARKS=OFF
+          -DOPTIONS_ATS_CORE_BUILD_EXAMPLES=OFF
+
+      - name: Run clang-tidy
+        run: |
+          jq -r '.[].file' build-lint/compile_commands.json \
+            | grep "^${GITHUB_WORKSPACE}/tests/" \
+            | xargs clang-tidy \
+            -p build-lint \
+            --warnings-as-errors='bugprone-use-after-move,performance-unnecessary-copy-initialization'
+
+  docs-integrity:
+    name: docs integrity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Markdown link check
+        run: ./scripts/check_markdown_links.sh
+
+  secret-scan:
+    name: dual secret scan (tree + history)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Run gitleaks (full history)
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run trufflehog (full history)
+        uses: trufflesecurity/trufflehog@0c952ace0f842f11c75775922d7400335cf60bc6 # main
+        with:
+          path: .
+          base: ""
+          head: HEAD
+          extra_args: --results=verified,unknown
+
+  compliance:
+    name: license + sbom + vuln scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Generate SBOM (SPDX)
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
+        with:
+          path: .
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: sbom-spdx
+          path: sbom.spdx.json
+
+      - name: Install ScanCode Toolkit
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install scancode-toolkit
+
+      - name: License scan
+        run: |
+          scancode --license --json licenses.json .
+
+      - name: Upload license artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: license-scan
+          path: licenses.json
+
+      - name: Vulnerability scan (Trivy)
+        uses: aquasecurity/trivy-action@d2a0b60797ff03db6132bd4e2b293f9b37081297 # master
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+
+  api-diff:
+    name: public header diff check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+        with:
+          fetch-depth: 0
+      - name: Public API diff check
+        run: ./scripts/check_public_api_diff.sh
+
+  benchmark:
+    name: ubuntu-latest / Release benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Install CMake
+        uses: lukka/get-cmake@a70f1cfa1857a3eecfe0d34962269e1b1e8be56c # v3.30.2
+
+      - name: Install Clang
+        run: sudo apt-get update && sudo apt-get install -y clang
+
+      - name: Configure (Release)
+        run: >
+          cmake -B build-release
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_CXX_COMPILER=clang++
+          -DOPTIONS_ATS_CORE_BUILD_GTESTS=OFF
+          -DOPTIONS_ATS_CORE_BUILD_EXAMPLES=OFF
+
+      - name: Build
+        run: cmake --build build-release -j
+
+      - name: Run latency benchmarks
+        run: ./build-release/benchmarks "[latency]" 2>&1 | tee benchmark_results.txt
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: benchmark-results
+          path: benchmark_results.txt
+
+  package-consumer:
+    name: CMake install + downstream consumer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: lukka/get-cmake@a70f1cfa1857a3eecfe0d34962269e1b1e8be56c # v3.30.2
+      - name: Configure install-only package
+        run: >
+          cmake -B build-package
+          -DOPTIONS_ATS_CORE_BUILD_CATCH2=OFF
+          -DOPTIONS_ATS_CORE_BUILD_GTESTS=OFF
+          -DOPTIONS_ATS_CORE_BUILD_BENCHMARKS=OFF
+          -DOPTIONS_ATS_CORE_BUILD_EXAMPLES=OFF
+      - name: Install package
+        run: cmake --install build-package --prefix "$PWD/stage"
+      - name: Build downstream consumer
+        run: >
+          cmake -S tests/package -B build-consumer
+          -DCMAKE_PREFIX_PATH="$PWD/stage"
+      - run: cmake --build build-consumer -j
+      - run: ./build-consumer/options_ats_core_consumer

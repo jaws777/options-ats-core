@@ -1,0 +1,8 @@
+# Default owner for all files
+* @jaws777
+
+# Security and governance paths require maintainer review
+SECURITY.md @jaws777
+CODE_OF_CONDUCT.md @jaws777
+MAINTAINER_RESPONSE.md @jaws777
+.github/workflows/* @jaws777

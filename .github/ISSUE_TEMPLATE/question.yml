@@ -1,0 +1,20 @@
+name: Question
+description: Ask a question about usage or design
+title: "question: "
+labels: [question]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What are you trying to understand or decide?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Relevant code, constraints, compiler/OS, and what you tried.
+    validations:
+      required: false
+

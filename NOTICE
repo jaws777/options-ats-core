@@ -1,0 +1,8 @@
+options-ats-core
+Copyright 2026 Matthew Jaworski
+
+This product includes software developed by Matthew Jaworski.
+
+This product bundles (via CMake FetchContent at build time) the following third-party components:
+- Catch2 v3.7.1 (BSL-1.0) - https://github.com/catchorg/Catch2
+- GoogleTest v1.15.2 (BSD-3-Clause) - https://github.com/google/googletest

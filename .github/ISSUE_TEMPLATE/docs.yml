@@ -1,0 +1,26 @@
+name: Documentation
+description: Report missing, unclear, or incorrect documentation
+title: "docs: "
+labels: [documentation]
+body:
+  - type: textarea
+    id: location
+    attributes:
+      label: Location
+      description: Which page/file/section needs improvement?
+      placeholder: "e.g., README.md, docs/IMPLEMENTATION_GUIDE.md, docs/wiki/03-market-data.md"
+    validations:
+      required: true
+  - type: textarea
+    id: issue
+    attributes:
+      label: What is wrong or missing?
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested fix (optional)
+    validations:
+      required: false
+

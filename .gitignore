@@ -1,0 +1,77 @@
+# Build directories
+/build/
+/build-*/
+cmake-build-*/
+/out/
+/bin/
+/lib/
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+CTestTestfile.cmake
+Testing/
+Makefile
+install_manifest.txt
+compile_flags.txt
+
+# Ninja
+.ninja_deps
+.ninja_log
+build.ninja
+
+# Object / binary files
+*.o
+*.obj
+*.so
+*.a
+*.lib
+*.dll
+*.dylib
+*.exe
+*.out
+*.app
+
+# Debug / profiling
+*.dSYM/
+*.gcda
+*.gcno
+*.gcov
+*.prof
+*.profraw
+*.profdata
+
+# Logs
+*.log
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+
+# clangd / clang-tidy
+.cache/
+.clangd/
+
+# Test / temp output
+/tmp/
+/temp/build/
+.DS_Store
+*.o
+*.a
+*.so
+*.dylib
+compile_commands.json
+.cache/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
