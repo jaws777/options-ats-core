@@ -1,0 +1,17 @@
+name: Security report (private)
+description: For security issues, do not submit public details
+title: "security: "
+labels: [security]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not disclose vulnerability details in public issues.
+        Use SECURITY.md private reporting channels instead.
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact summary
+      description: Non-sensitive summary only.
+    validations:
+      required: true

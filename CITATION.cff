@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it."
+title: "options-ats-core"
+type: software
+authors:
+  - family-names: Jaworski
+    given-names: Matthew
+repository-code: "https://github.com/jaws777/options-ats-core"
+license: Apache-2.0
