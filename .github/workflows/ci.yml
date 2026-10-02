@@ -159,7 +159,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run trufflehog (full history)
-        uses: trufflesecurity/trufflehog@0c952ace0f842f11c75775922d7400335cf60bc6 # main
+        uses: trufflesecurity/trufflehog@e28360875917c9c730f9c64aae29fb93aa6c359e # main
         with:
           path: .
           base: ""
